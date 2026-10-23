@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Northgate Waste Ops - Alert Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:            #F8FAFC;
+      --surface-1:     #FFFFFF;
+      --surface-2:     #F1F5F9;
+      --surface-3:     #E2E8F0;
+      --border:        #CBD5E1;
+      --border-strong: #94A3B8;
+      --text:          #0F172A;
+      --text-muted:    #475569;
+      --text-faint:    #64748B;
+      --accent:        #0D9488;
+      --accent-soft:   rgba(13, 148, 136, 0.12);
+
+      --status-normal:  #059669;
+      --status-filling: #D97706;
+      --status-high:    #EA580C;
+      --status-full:    #DC2626;
+      --status-offline: #475569;
+
+      --sim:     #6D28D9;
+      --live:    #059669;
+      --lorawan: #7C3AED;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--surface-1);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(13, 148, 136, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-badges {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Mode Segmented Switch */
+    .mode-switch {
+      display: flex;
+      align-items: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .mode-btn {
+      padding: 5px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--surface-1);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
+    }
+
+    .mode-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .badge-ws {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .badge-ws.connected {
+      background: #ECFDF5;
+      border-color: #6EE7B7;
+      color: var(--status-normal);
+    }
+
+    .badge-ws.disconnected {
+      background: #FEF2F2;
+      border-color: #FCA5A5;
+      color: var(--status-full);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-dot.pulse {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    .encryption-status-line {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 6px;
+    }
+
+    main {
+      flex: 1;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 24px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 960px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.45;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .bin-select-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .bin-select-group select {
+      flex: 1.3;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    .bin-select-group input {
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surface-3);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    .num-input-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .num-input {
+      width: 68px !important;
+      padding: 6px 8px !important;
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 6px !important;
+      background: var(--surface-1) !important;
+    }
+
+    .unit {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .preview-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    .preview-NORMAL { background: #ECFDF5; color: var(--status-normal); border: 1px solid #A7F3D0; }
+    .preview-FILLING { background: #FFFBEB; color: var(--status-filling); border: 1px solid #FDE68A; }
+    .preview-HIGH { background: #FFF7ED; color: var(--status-high); border: 1px solid #FED7AA; }
+    .preview-FULL { background: #FEF2F2; color: var(--status-full); border: 1px solid #FECACA; }
+
+    .provenance-toggle {
+      display: flex;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .toggle-btn.active.sim {
+      background: #EDE9FE;
+      color: var(--sim);
+      border-bottom: 2px solid var(--sim);
+    }
+
+    .toggle-btn.active.live {
+      background: #D1FAE5;
+      color: var(--live);
+      border-bottom: 2px solid var(--live);
+    }
+
+    .btn-send {
+      margin-top: 10px;
+      padding: 13px 20px;
+      background: var(--accent);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);
+    }
+
+    .btn-send:hover:not(:disabled) {
+      opacity: 0.94;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(13, 148, 136, 0.25);
+    }
+
+    .btn-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .log-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .log-container {
+      flex: 1;
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 520px;
+      min-height: 380px;
+    }
+
+    .log-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      line-height: 1.45;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-item.alert-FULL { border-left-color: var(--status-full); background: #FEF2F2; }
+    .log-item.alert-HIGH { border-left-color: var(--status-high); background: #FFF7ED; }
+    .log-item.status-FILLING { border-left-color: var(--status-filling); background: #FFFBEB; }
+    .log-item.status-NORMAL { border-left-color: var(--status-normal); background: #F0FDF4; }
+    .log-item.kind-hello { border-left-color: var(--accent); background: #F0FDFA; }
+    .log-item.kind-mode { border-left-color: var(--sim); background: #FAF5FF; }
+    .log-item.kind-ping { border-left-color: var(--border-strong); opacity: 0.65; }
+
+    .log-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 10px;
+      margin-bottom: 4px;
+    }
+
+    .log-type {
+      font-weight: 700;
+    }
+
+    .log-content {
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      min-width: 300px;
+      max-width: 450px;
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .toast-success {
+      background: #ECFDF5;
+      border: 1px solid #6EE7B7;
+      color: #065F46;
+    }
+
+    .toast-error {
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
+      color: #991B1B;
+    }
+
+    .quick-pills {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .quick-pill {
+      flex: 1;
+      padding: 5px 6px;
+      border-radius: 6px;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+
+    .quick-pill:hover {
+      background: var(--surface-2);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">OPS</div>
+      <div>
+        <div class="brand-title">NORTHGATE WASTE OPS</div>
+        <div class="brand-subtitle">
+          <span>Alert and Telemetry Console</span>
+          <span>|</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">FastAPI :8765</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-badges">
+      <!-- Mode Toggle Switch -->
+      <div class="mode-switch" title="Toggle active system mode">
+        <button type="button" id="btn-mode-sim" class="mode-btn active">SIMULATION</button>
+        <button type="button" id="btn-mode-realtime" class="mode-btn">REAL-TIME</button>
+      </div>
+
+      <!-- Encryption Status -->
+      <div id="encryption-status" class="encryption-status-line">
+        <span class="status-dot" style="color: var(--accent);"></span>
+        <span id="encryption-label">Encryption: AES-128-CCM active</span>
+      </div>
+
+      <div id="ws-badge" class="badge-ws disconnected">
+        <span class="status-dot"></span>
+        <span id="ws-label">DISCONNECTED</span>
+      </div>
+      <button id="btn-refresh-bins" type="button" class="quick-pill" style="padding: 6px 12px;" title="Reload bins from server">
+        Reload Bins
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left column: Control Form -->
+    <section class="card">
+      <div class="card-title">
+        <span>Dispatch Alert / Fill Level</span>
+        <span id="status-preview-pill" class="preview-pill preview-NORMAL">NORMAL</span>
+      </div>
+      <div class="card-subtitle">
+        Update a bin's fill level. Ingested through backend SQLite with automated hysteresis and pushed over WebSocket to the live map.
+      </div>
+
+      <form id="alert-form">
+        <!-- Bin ID Selector & Direct Input -->
+        <div class="form-group">
+          <label for="bin-select">Target Bin</label>
+          <div class="bin-select-group">
+            <select id="bin-select">
+              <option value="">-- Choose Existing Bin --</option>
+            </select>
+            <input type="text" id="bin-id-input" placeholder="e.g. BIN-01" required pattern="^[A-Za-z0-9_-]{1,32}$" title="1-32 letters, numbers, _ or -" />
+          </div>
+        </div>
+
+        <!-- Fill Level Slider + Number -->
+        <div class="form-group">
+          <label>Fill Level</label>
+          <div class="slider-container">
+            <input type="range" id="fill-slider" min="0" max="100" step="1" value="50" />
+            <div class="num-input-group">
+              <input type="number" id="fill-number" class="num-input" min="0" max="100" step="0.1" value="50" required />
+              <span class="unit">%</span>
+            </div>
+          </div>
+          <!-- Quick presets -->
+          <div class="quick-pills">
+            <button type="button" class="quick-pill" data-fill="25">25% Normal</button>
+            <button type="button" class="quick-pill" data-fill="65">65% Filling</button>
+            <button type="button" class="quick-pill" data-fill="85">85% High</button>
+            <button type="button" class="quick-pill" data-fill="98">98% Full</button>
+          </div>
+        </div>
+
+        <!-- Optional Status Override -->
+        <div class="form-group">
+          <label for="status-override">Status Override (Optional)</label>
+          <select id="status-override">
+            <option value="">Auto (Calculate with Hysteresis)</option>
+            <option value="NORMAL">NORMAL</option>
+            <option value="FILLING">FILLING</option>
+            <option value="HIGH">HIGH</option>
+            <option value="FULL">FULL</option>
+          </select>
+        </div>
+
+        <!-- Optional Note -->
+        <div class="form-group">
+          <label for="alert-note">Operator Note / Annotation (Optional)</label>
+          <input type="text" id="alert-note" placeholder="e.g. Event crowd surge at North Gate" />
+        </div>
+
+        <!-- Provenance Toggle -->
+        <div class="form-group">
+          <label>Data Provenance</label>
+          <div class="provenance-toggle">
+            <button type="button" id="prov-sim" class="toggle-btn active sim">
+              SIMULATED_DEMO
+            </button>
+            <button type="button" id="prov-live" class="toggle-btn live">
+              LIVE_HARDWARE
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-submit" class="btn-send">
+          Send Alert
+        </button>
+      </form>
+    </section>
+
+    <!-- Right column: Live WebSocket Event Stream -->
+    <section class="card log-panel">
+      <div class="log-header">
+        <div>
+          <div class="card-title" style="margin-bottom: 2px;">WebSocket Live Feed</div>
+          <div style="font-size: 12px; color: var(--text-muted);">Real-time broadcast stream received on /live</div>
+        </div>
+        <button id="btn-clear-log" type="button" class="quick-pill" style="padding: 4px 10px;">Clear</button>
+      </div>
+
+      <div id="log-container" class="log-container">
+        <div class="log-item kind-hello">
+          <div class="log-meta">
+            <span class="log-type">READY</span>
+            <span>--:--:--</span>
+          </div>
+          <div class="log-content">Connecting to WebSocket at /live...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script>
+    // Configuration & State
+    const WS_URL = ((window.location.protocol === 'https:') ? 'wss://' : 'ws://') + window.location.host + '/live';
+    const API_BASE = window.location.origin;
+
+    let selectedProvenance = 'SIMULATED_DEMO';
+    let currentMode = 'SIMULATION';
+    let ws = null;
+    let wsBackoffMs = 1000;
+    const maxBackoffMs = 10000;
+    const maxLogEntries = 20;
+
+    // DOM Elements
+    const wsBadge = document.getElementById('ws-badge');
+    const wsLabel = document.getElementById('ws-label');
+    const binSelect = document.getElementById('bin-select');
+    const binIdInput = document.getElementById('bin-id-input');
+    const fillSlider = document.getElementById('fill-slider');
+    const fillNumber = document.getElementById('fill-number');
+    const statusPreviewPill = document.getElementById('status-preview-pill');
+    const statusOverride = document.getElementById('status-override');
+    const alertNote = document.getElementById('alert-note');
+    const provSimBtn = document.getElementById('prov-sim');
+    const provLiveBtn = document.getElementById('prov-live');
+    const alertForm = document.getElementById('alert-form');
+    const btnSubmit = document.getElementById('btn-submit');
+    const logContainer = document.getElementById('log-container');
+    const toastContainer = document.getElementById('toast-container');
+    const btnRefreshBins = document.getElementById('btn-refresh-bins');
+    const btnClearLog = document.getElementById('btn-clear-log');
+    const btnModeSim = document.getElementById('btn-mode-sim');
+    const btnModeRealtime = document.getElementById('btn-mode-realtime');
+    const encryptionLabel = document.getElementById('encryption-label');
+
+    // Toast Notification System
+    function showToast(message, type = 'success', durationMs = 4500) {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      const prefix = type === 'success' ? 'OK' : 'ERR';
+      toast.innerHTML = `<span style="font-weight:700;font-size:12px;font-family:monospace;padding:2px 4px;border-radius:4px;background:rgba(0,0,0,0.06);">${prefix}</span><div>${message}</div>`;
+      toastContainer.appendChild(toast);
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, durationMs);
+    }
+
+    // Helper: Classify Status with Hysteresis
+    function classifyStatus(fill) {
+      const f = Math.round(fill);
+      if (f >= 95) return 'FULL';
+      if (f >= 80) return 'HIGH';
+      if (f >= 60) return 'FILLING';
+      return 'NORMAL';
+    }
+
+    function updatePreviewPill() {
+      const fill = parseFloat(fillSlider.value) || 0;
+      const override = statusOverride.value;
+      const status = override || classifyStatus(fill);
+      statusPreviewPill.textContent = status;
+      statusPreviewPill.className = `preview-pill preview-${status}`;
+    }
+
+    // Sync Slider & Number
+    fillSlider.addEventListener('input', () => {
+      fillNumber.value = fillSlider.value;
+      updatePreviewPill();
+    });
+
+    fillNumber.addEventListener('input', () => {
+      fillSlider.value = fillNumber.value;
+      updatePreviewPill();
+    });
+
+    statusOverride.addEventListener('change', updatePreviewPill);
+
+    // Preset Buttons
+    document.querySelectorAll('.quick-pill[data-fill]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.getAttribute('data-fill');
+        fillSlider.value = val;
+        fillNumber.value = val;
+        updatePreviewPill();
+      });
+    });
+
+    // Provenance Toggle
+    provSimBtn.addEventListener('click', () => {
+      selectedProvenance = 'SIMULATED_DEMO';
+      provSimBtn.classList.add('active', 'sim');
+      provLiveBtn.classList.remove('active', 'live');
+    });
+
+    provLiveBtn.addEventListener('click', () => {
+      selectedProvenance = 'LIVE_HARDWARE';
+      provLiveBtn.classList.add('active', 'live');
+      provSimBtn.classList.remove('active', 'sim');
+    });
+
+    // Mode Toggle functions
+    function updateModeUI(mode) {
+      currentMode = mode;
+      if (mode === 'REALTIME') {
+        btnModeRealtime.classList.add('active');
+        btnModeSim.classList.remove('active');
+        // Align default provenance with active mode
+        selectedProvenance = 'LIVE_HARDWARE';
+        provLiveBtn.classList.add('active', 'live');
+        provSimBtn.classList.remove('active', 'sim');
+      } else {
+        btnModeSim.classList.add('active');
+        btnModeRealtime.classList.remove('active');
+        selectedProvenance = 'SIMULATED_DEMO';
+        provSimBtn.classList.add('active', 'sim');
+        provLiveBtn.classList.remove('active', 'live');
+      }
+    }
+
+    async function setMode(mode) {
+      try {
+        const res = await fetch(`${API_BASE}/api/mode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode })
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          showToast(body.detail || `HTTP ${res.status}`, 'error');
+          return;
+        }
+        const data = await res.json();
+        updateModeUI(data.mode);
+        showToast(`System Mode updated to ${data.mode}`, 'success');
+      } catch (err) {
+        showToast(`Failed to update mode: ${err.message}`, 'error');
+      }
+    }
+
+    btnModeSim.addEventListener('click', () => setMode('SIMULATION'));
+    btnModeRealtime.addEventListener('click', () => setMode('REALTIME'));
+
+    // Fetch and Populate Bins & Health
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API_BASE}/api/health`);
+        if (res.ok) {
+          const h = await res.json();
+          if (h.mode) updateModeUI(h.mode);
+          if (h.encryption) {
+            encryptionLabel.textContent = `Encryption: AES-128-CCM active (${h.mode || 'ACTIVE'})`;
+          }
+        }
+      } catch (_) {}
+    }
+
+    async function loadBins() {
+      try {
+        const res = await fetch(`${API_BASE}/api/bins`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const bins = await res.json();
+        
+        const currentVal = binSelect.value;
+        binSelect.innerHTML = '<option value="">-- Choose Existing Bin --</option>';
+        
+        bins.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = b.bin_id;
+          opt.textContent = `${b.bin_id} (${b.latest_fill_level}% - ${b.latest_status || 'UNKNOWN'})`;
+          binSelect.appendChild(opt);
+        });
+
+        if (currentVal) {
+          binSelect.value = currentVal;
+        } else if (bins.length > 0 && !binIdInput.value) {
+          binSelect.value = bins[0].bin_id;
+          binIdInput.value = bins[0].bin_id;
+          if (bins[0].latest_fill_level !== undefined) {
+            fillSlider.value = bins[0].latest_fill_level;
+            fillNumber.value = bins[0].latest_fill_level;
+            updatePreviewPill();
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load bins:', err);
+      }
+    }
+
+    binSelect.addEventListener('change', () => {
+      if (binSelect.value) {
+        binIdInput.value = binSelect.value;
+        fetch(`${API_BASE}/api/bins/${encodeURIComponent(binSelect.value)}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.latest_fill_level !== undefined) {
+              fillSlider.value = data.latest_fill_level;
+              fillNumber.value = data.latest_fill_level;
+              updatePreviewPill();
+            }
+          })
+          .catch(() => {});
+      }
+    });
+
+    binIdInput.addEventListener('input', () => {
+      const typed = binIdInput.value.trim();
+      let matched = false;
+      for (const opt of binSelect.options) {
+        if (opt.value === typed) {
+          binSelect.value = typed;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) binSelect.value = "";
+    });
+
+    btnRefreshBins.addEventListener('click', loadBins);
+
+    // Form Submit -> POST /api/alert
+    alertForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const binId = binIdInput.value.trim();
+      const fillLevel = parseFloat(fillNumber.value);
+      const status = statusOverride.value || undefined;
+      const note = alertNote.value.trim() || undefined;
+
+      if (!binId) {
+        showToast('Please enter or select a bin ID', 'error');
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Sending Alert...';
+
+      try {
+        const payload = {
+          bin_id: binId,
+          fill_level: fillLevel,
+          status,
+          note,
+          provenance: selectedProvenance
+        };
+
+        const res = await fetch(`${API_BASE}/api/alert`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const body = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          const errMsg = body.detail || body.message || `Server responded with ${res.status}`;
+          showToast(`Error: ${errMsg}`, 'error');
+        } else {
+          const createdStr = (body.alerts_created && body.alerts_created.length > 0)
+            ? ` Alerts Created: ${body.alerts_created.map(a => a.alert_type).join(', ')}`
+            : '';
+          const resolvedStr = (body.alerts_resolved && body.alerts_resolved.length > 0)
+            ? ` Alerts Resolved: ${body.alerts_resolved.join(', ')}`
+            : '';
+          showToast(`Alert accepted for ${binId}! Status: ${body.status}.${createdStr}${resolvedStr}`, 'success');
+          loadBins();
+        }
+      } catch (err) {
+        showToast(`Network Error: ${err.message}`, 'error');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Send Alert';
+      }
+    });
+
+    // Logging helper
+    function appendLog(data) {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const item = document.createElement('div');
+      
+      let typeClass = `kind-${data.type || 'unknown'}`;
+      if (data.type === 'alert' && data.alert_type) {
+        typeClass += ` alert-${data.alert_type}`;
+      } else if (data.status) {
+        typeClass += ` status-${data.status}`;
+      }
+      item.className = `log-item ${typeClass}`;
+
+      const meta = document.createElement('div');
+      meta.className = 'log-meta';
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'log-type';
+      typeSpan.textContent = (data.type || 'EVENT').toUpperCase();
+      const timeSpan = document.createElement('span');
+      timeSpan.textContent = timeStr;
+      meta.appendChild(typeSpan);
+      meta.appendChild(timeSpan);
+
+      const content = document.createElement('div');
+      content.className = 'log-content';
+
+      if (data.type === 'ping') {
+        content.textContent = 'Server heartbeat ping';
+      } else if (data.type === 'mode') {
+        content.innerHTML = `Mode changed to <strong>${data.mode}</strong>`;
+        updateModeUI(data.mode);
+      } else if (data.type === 'alert') {
+        content.innerHTML = `<strong>ALERT [${data.alert_type}]</strong> for bin <strong>${data.bin_id}</strong>: ${data.message || ''} (${data.provenance || ''})`;
+      } else if (data.type === 'telemetry' || data.type === 'simulated_telemetry') {
+        content.innerHTML = `<strong>${data.type}</strong>: bin <strong>${data.bin_id}</strong> | fill: <strong>${data.fill_level}%</strong> | status: <strong>${data.status}</strong> | prov: ${data.provenance}${data.note ? ` | note: "${data.note}"` : ''}`;
+      } else {
+        content.textContent = JSON.stringify(data);
+      }
+
+      item.appendChild(meta);
+      item.appendChild(content);
+      logContainer.insertBefore(item, logContainer.firstChild);
+
+      while (logContainer.children.length > maxLogEntries) {
+        logContainer.removeChild(logContainer.lastChild);
+      }
+    }
+
+    btnClearLog.addEventListener('click', () => {
+      logContainer.innerHTML = '';
+    });
+
+    // WebSocket Connection
+    function initWebSocket() {
+      if (ws) {
+        try { ws.close(); } catch (_) {}
+      }
+
+      wsBadge.className = 'badge-ws disconnected';
+      wsLabel.textContent = 'CONNECTING...';
+
+      try {
+        ws = new WebSocket(WS_URL);
+
+        ws.onopen = () => {
+          wsBadge.className = 'badge-ws connected';
+          wsLabel.textContent = 'CONNECTED';
+          wsBadge.querySelector('.status-dot').classList.add('pulse');
+          wsBackoffMs = 1000;
+          loadBins();
+          checkHealth();
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'hello' && data.mode) {
+              updateModeUI(data.mode);
+            }
+            appendLog(data);
+          } catch (e) {
+            appendLog({ type: 'raw', data: event.data });
+          }
+        };
+
+        ws.onclose = () => {
+          wsBadge.className = 'badge-ws disconnected';
+          wsLabel.textContent = 'DISCONNECTED';
+          wsBadge.querySelector('.status-dot').classList.remove('pulse');
+          setTimeout(() => {
+            wsBackoffMs = Math.min(wsBackoffMs * 1.5, maxBackoffMs);
+            initWebSocket();
+          }, wsBackoffMs);
+        };
+
+        ws.onerror = () => {
+          ws.close();
+        };
+      } catch (err) {
+        wsBadge.className = 'badge-ws disconnected';
+        wsLabel.textContent = 'ERROR';
+        setTimeout(initWebSocket, wsBackoffMs);
+      }
+    }
+
+    // Initialize
+    updatePreviewPill();
+    loadBins();
+    checkHealth();
+    initWebSocket();
+  </script>
+</body>
+</html>

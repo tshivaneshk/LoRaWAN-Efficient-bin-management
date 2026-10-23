@@ -1,0 +1,62 @@
+:root,
+:root[data-theme="dark"] {
+  --bg:            #0B0F14;
+  --surface-1:     #111821;
+  --surface-2:     #17202B;
+  --surface-3:     #1E2938;
+  --border:        #243040;
+  --border-strong: #33445A;
+  --text:          #E6EDF3;
+  --text-muted:    #8B9BB0;
+  --text-faint:    #5B6B80;
+  --accent:        #22D3EE;
+  --accent-soft:   rgba(34, 211, 238, 0.14);
+
+  --status-normal:  #34D399;
+  --status-filling: #FBBF24;
+  --status-high:    #FB923C;
+  --status-full:    #F43F5E;
+  --status-offline: #64748B;
+
+  --sim:     #A78BFA;
+  --live:    #4ADE80;
+  --lorawan: #C084FC;
+
+  --map-water: #070C12;
+  --map-land:  #0D131A;
+  --map-road:  #1B2532;
+  --map-building: #151E29;
+  --elevation-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --overlay-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="light"] {
+  --bg:            #F6F8FB;
+  --surface-1:     #FFFFFF;
+  --surface-2:     #F0F3F8;
+  --surface-3:     #E4E9F2;
+  --border:        #D0D8E5;
+  --border-strong: #B0BDD0;
+  --text:          #0F1B2D;
+  --text-muted:    #475569;
+  --text-faint:    #64748B;
+  --accent:        #0891B2;
+  --accent-soft:   rgba(8, 145, 178, 0.12);
+
+  --status-normal:  #047857;
+  --status-filling: #B45309;
+  --status-high:    #C2410C;
+  --status-full:    #BE123C;
+  --status-offline: #475569;
+
+  --sim:     #6D28D9;
+  --live:    #15803D;
+  --lorawan: #7E22CE;
+
+  --map-water: #D8E6F3;
+  --map-land:  #EEF2F7;
+  --map-road:  #CBD5E1;
+  --map-building: #E2E8F0;
+  --elevation-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --overlay-shadow: 0 12px 32px rgba(15, 27, 45, 0.14);
+}

@@ -1,0 +1,6 @@
+LoRa gateway ready
+{"type":"telemetry","bin_id":"BIN-01","fill_level":45,"status":"NORMAL","battery_pct":92,"sequence":1,"rssi_dbm":-80,"snr_db":8.0}
+{"type":"telemetry","bin_id":"BIN-01","fill_level":85,"status":"HIGH","battery_pct":92,"sequence":2,"rssi_dbm":-82,"snr_db":7.5}
+{"type":"telemetry","bin_id":"BIN-01","fill_level":85,"status":"HIGH","battery_pct":92,"sequence":2,"rssi_dbm":-82,"snr_db":7.5}
+{"type":"telemetry","bin_id":"BIN-01","fill_level":250,"status":"HIGH","battery_pct":92,"sequence":3,"rssi_dbm":-82,"snr_db":7.5}
+{"type":"telemetry","bin_id":"BIN-01","fill_level":97,"status":"FULL","battery_pct":91,"sequence":4,"rssi_dbm":-83,"snr_db":7.0}
